@@ -1,0 +1,10 @@
+# https://clangd.llvm.org/config
+CompileFlags:
+    Add: [ -Wall, -Wextra, -Wpedantic ]
+Diagnostics:
+    UnusedIncludes: Strict
+    MissingIncludes: Strict
+    ClangTidy:
+        # https://clang.llvm.org/extra/clang-tidy
+        Add: [ bugprone-*, cert-*-c, clang-analyzer-* ]
+        Remove: [ bugprone-easily-swappable-parameters ]

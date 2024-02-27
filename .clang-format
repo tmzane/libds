@@ -1,0 +1,12 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+IndentWidth: 4
+ColumnLimit: 0
+InsertBraces: true
+IncludeBlocks: Regroup
+PointerAlignment: Left
+QualifierAlignment: Left
+AlignArrayOfStructures: Left
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+SeparateDefinitionBlocks: Always
