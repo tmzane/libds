@@ -40,7 +40,7 @@ map* map_new(size_t n_buckets) {
     return m;
 }
 
-void* map_get(map* m, const char* key) {
+void* map_get(const map* m, const char* key) {
     uint64_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
@@ -91,7 +91,7 @@ void map_del(map* m, const char* key) {
     }
 }
 
-size_t map_len(map* m) {
+size_t map_len(const map* m) {
     return m->n_entries;
 }
 
@@ -107,7 +107,7 @@ void map_free(map* m) {
     free(m);
 }
 
-struct map_iter map_iter_new(map* m) {
+struct map_iter map_iter_new(const map* m) {
     struct map_iter it = {
         .key         = NULL,
         .value       = NULL,
@@ -118,7 +118,7 @@ struct map_iter map_iter_new(map* m) {
 }
 
 bool map_iter_next(struct map_iter* it) {
-    map* m = it->_map;
+    const map* m = it->_map;
 
     for (; it->_bucket_idx < m->n_buckets; it->_bucket_idx++) {
         size_t i = it->_bucket_idx;
