@@ -25,10 +25,10 @@ struct entry {
     struct entry* next;
 };
 
-typedef struct map {
+struct map {
     size_t        n_buckets;
     struct entry* buckets[];
-} map;
+};
 
 map* map_new(size_t n_buckets) {
     map* m       = malloc(sizeof(map) + n_buckets * sizeof(struct entry*));
