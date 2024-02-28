@@ -4,6 +4,7 @@
 
 #include "map.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,4 +97,44 @@ void map_free(map* m) {
         }
     }
     free(m);
+}
+
+struct map_iter map_iter_new(map* m) {
+    struct map_iter it = {
+        .key         = NULL,
+        .value       = NULL,
+        ._map        = m,
+        ._bucket_idx = 0,
+    };
+    return it;
+}
+
+bool map_iter_next(struct map_iter* it) {
+    map* m = it->_map;
+
+    for (; it->_bucket_idx < m->n_buckets; it->_bucket_idx++) {
+        size_t i = it->_bucket_idx;
+        if (m->buckets[i] == NULL) {
+            continue;
+        }
+
+        if (it->key == NULL) {
+            it->key   = m->buckets[i]->key;
+            it->value = m->buckets[i]->value;
+            return true;
+        }
+
+        for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
+            if (strcmp(e->key, it->key) == 0 && e->next != NULL) {
+                it->key   = e->next->key;
+                it->value = e->next->value;
+                return true;
+            }
+        }
+
+        it->key   = NULL;
+        it->value = NULL;
+    }
+
+    return false;
 }
