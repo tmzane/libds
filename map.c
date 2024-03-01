@@ -52,13 +52,14 @@ void* map_get(const map* m, const char* key) {
     return NULL;
 }
 
-void map_set(map* m, const char* key, void* value) {
+void* map_set(map* m, const char* key, void* value) {
     uint64_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
         if (strcmp(e->key, key) == 0) {
-            e->value = value;
-            return;
+            void* prev = e->value;
+            e->value   = value;
+            return prev;
         }
     }
 
@@ -68,6 +69,8 @@ void map_set(map* m, const char* key, void* value) {
     e->next         = m->buckets[i];
     m->buckets[i]   = e;
     m->n_entries++;
+
+    return value;
 }
 
 void map_del(map* m, const char* key) {
@@ -88,6 +91,7 @@ void map_del(map* m, const char* key) {
         free(e->key);
         free(e);
         m->n_entries--;
+
         return;
     }
 }

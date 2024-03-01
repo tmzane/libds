@@ -15,7 +15,7 @@ int main(void) {
         int* p = map_get(m, keys[i]);
         if (p == NULL) {
             p = calloc(1, sizeof(int));
-            map_set(m, keys[i], p);
+            assert(map_set(m, keys[i], p) == p);
         }
         (*p)++;
     }
@@ -25,8 +25,11 @@ int main(void) {
     assert(*(int*)map_get(m, "bar") == 2);
     assert(*(int*)map_get(m, "baz") == 3);
 
-    int n = 4;
-    map_set(m, "xyz", &n);
+    int n1 = -4, n2 = 4;
+    assert(map_set(m, "xyz", &n1) == &n1);
+    assert(*(int*)map_get(m, "xyz") == -4);
+    assert(map_set(m, "xyz", &n2) == &n1);
+    assert(*(int*)map_get(m, "xyz") == 4);
     assert(map_len(m) == 4);
 
     for (struct map_iter it = map_iter_new(m); map_iter_next(&it);) {
