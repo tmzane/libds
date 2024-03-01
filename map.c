@@ -33,10 +33,15 @@ struct map {
 };
 
 map* map_new(size_t n_buckets) {
-    map* m       = malloc(sizeof(map) + n_buckets * sizeof(struct entry*));
+    map* m = malloc(sizeof(map) + n_buckets * sizeof(struct entry*));
+    if (m == NULL) {
+        return NULL;
+    }
+
     m->n_entries = 0;
     m->n_buckets = n_buckets;
     memset(m->buckets, 0, n_buckets * sizeof(struct entry*));
+
     return m;
 }
 
@@ -64,10 +69,14 @@ void* map_set(map* m, const char* key, void* value) {
     }
 
     struct entry* e = malloc(sizeof(struct entry));
-    e->key          = strdup(key);
-    e->value        = value;
-    e->next         = m->buckets[i];
-    m->buckets[i]   = e;
+    if (e == NULL) {
+        return NULL;
+    }
+
+    e->key        = strdup(key);
+    e->value      = value;
+    e->next       = m->buckets[i];
+    m->buckets[i] = e;
     m->n_entries++;
 
     return value;
