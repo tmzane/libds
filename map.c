@@ -4,6 +4,7 @@
 
 #include "map.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -58,6 +59,7 @@ void* map_get(const map* m, const char* key) {
 }
 
 void* map_set(map* m, const char* key, void* value) {
+    assert(value != NULL);
     uint64_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
