@@ -88,6 +88,7 @@ void map_del(map* m, const char* key) {
         free(e->key);
         free(e);
         m->n_entries--;
+        return;
     }
 }
 
