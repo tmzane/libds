@@ -11,15 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-// https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function#FNV-1a_hash
-static uint64_t hash(const char* key) {
-    uint64_t h = 14695981039346656037U;
-    for (size_t i = 0; key[i] != '\0'; i++) {
-        h ^= key[i];
-        h *= 1099511628211U;
-    }
-    return h;
-}
+#define INIT_N_BUCKETS 8
+
+static uint64_t hash(const char* key);
+static map*     map_resize(map* m, size_t n_buckets);
 
 struct entry {
     char*         key;
@@ -28,26 +23,21 @@ struct entry {
 };
 
 struct map {
-    size_t        n_entries;
-    size_t        n_buckets;
-    struct entry* buckets[];
+    size_t         n_entries;
+    size_t         n_buckets;
+    struct entry** buckets;
 };
 
-map* map_new(size_t n_buckets) {
-    map* m = malloc(sizeof(map) + n_buckets * sizeof(struct entry*));
+map* map_new(void) {
+    map* m = calloc(1, sizeof(map));
     if (m == NULL) {
         return NULL;
     }
-
-    m->n_entries = 0;
-    m->n_buckets = n_buckets;
-    memset(m->buckets, 0, n_buckets * sizeof(struct entry*));
-
-    return m;
+    return map_resize(m, INIT_N_BUCKETS);
 }
 
 void* map_get(const map* m, const char* key) {
-    uint64_t i = hash(key) % m->n_buckets;
+    size_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
         if (strcmp(e->key, key) == 0) {
@@ -60,7 +50,13 @@ void* map_get(const map* m, const char* key) {
 
 void* map_set(map* m, const char* key, void* value) {
     assert(value != NULL);
-    uint64_t i = hash(key) % m->n_buckets;
+
+    // TODO: shrink
+    if (m->n_entries >= m->n_buckets / 2) {
+        map_resize(m, m->n_buckets * 2);
+    }
+
+    size_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
         if (strcmp(e->key, key) == 0) {
@@ -85,7 +81,7 @@ void* map_set(map* m, const char* key, void* value) {
 }
 
 void map_del(map* m, const char* key) {
-    uint64_t i = hash(key) % m->n_buckets;
+    size_t i = hash(key) % m->n_buckets;
 
     struct entry* prev = NULL;
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next, prev = e) {
@@ -109,6 +105,29 @@ void map_del(map* m, const char* key) {
 
 size_t map_len(const map* m) {
     return m->n_entries;
+}
+
+static map* map_resize(map* m, size_t n_buckets) {
+    struct entry** new_buckets = calloc(n_buckets, sizeof(struct entry*));
+    if (new_buckets == NULL) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < m->n_buckets; i++) {
+        struct entry* next = NULL;
+        for (struct entry* e = m->buckets[i]; e != NULL; e = next) {
+            next           = e->next;
+            size_t j       = hash(e->key) % n_buckets;
+            e->next        = new_buckets[j];
+            new_buckets[j] = e;
+        }
+    }
+
+    free(m->buckets);
+    m->n_buckets = n_buckets;
+    m->buckets   = new_buckets;
+
+    return m;
 }
 
 void map_free(map* m) {
@@ -180,4 +199,14 @@ bool map_iter_next(struct map_iter* it) {
     }
 
     return false;
+}
+
+// https://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function#FNV-1a_hash
+static uint64_t hash(const char* key) {
+    uint64_t h = 14695981039346656037U;
+    for (size_t i = 0; key[i] != '\0'; i++) {
+        h ^= key[i];
+        h *= 1099511628211U;
+    }
+    return h;
 }
