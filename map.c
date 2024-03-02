@@ -123,6 +123,25 @@ void map_free(map* m) {
     free(m);
 }
 
+void map_print_value(void* value); // defined by the user of map_print.
+
+void map_print(map* m) {
+    printf("\n%zu buckets; %zu entries\n", m->n_buckets, m->n_entries);
+    for (size_t i = 0; i < m->n_buckets; i++) {
+        printf("%zu:", i);
+        for (struct entry* e = m->buckets[i];; e = e->next) {
+            if (e == NULL) {
+                printf(" NULL");
+                break;
+            }
+            printf(" (%s:", e->key);
+            map_print_value(e->value);
+            printf(") ->");
+        }
+        printf("\n");
+    }
+}
+
 struct map_iter map_iter_new(const map* m) {
     struct map_iter it = {
         .key         = NULL,

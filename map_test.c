@@ -3,7 +3,14 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
+// #define DEBUG
+
+void map_print(map*);
+
+void map_print_value(void* value) {
+    printf("%d", *(int*)value);
+}
 
 int main(void) {
     char* keys[] = {"foo", "bar", "bar", "baz", "baz", "baz"};
@@ -25,6 +32,10 @@ int main(void) {
     assert(*(int*)map_get(m, "bar") == 2);
     assert(*(int*)map_get(m, "baz") == 3);
 
+#ifdef DEBUG
+    map_print(m);
+#endif
+
     int n1 = -4, n2 = 4;
     assert(map_set(m, "xyz", &n1) == &n1);
     assert(*(int*)map_get(m, "xyz") == -4);
@@ -40,6 +51,10 @@ int main(void) {
     assert(*(int*)map_get(m, "bar") == 4);
     assert(*(int*)map_get(m, "baz") == 6);
     assert(*(int*)map_get(m, "xyz") == 8);
+
+#ifdef DEBUG
+    map_print(m);
+#endif
 
     map_del(m, "xyz");
     map_del(m, "zyx");
