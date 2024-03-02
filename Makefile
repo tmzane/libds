@@ -1,7 +1,7 @@
 .POSIX:
 
 CC         = cc
-CFLAGS     = -Wall -Wextra -Wpedantic -fsanitize=$(SANITIZERS)
+CFLAGS     = -Wall -Wextra -Wpedantic -Wshadow -fsanitize=$(SANITIZERS)
 LDFLAGS    = -fsanitize=$(SANITIZERS)
 SANITIZERS = address,undefined
 
