@@ -139,6 +139,7 @@ void map_free(map* m) {
             e = next;
         }
     }
+    free(m->buckets);
     free(m);
 }
 
