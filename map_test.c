@@ -3,33 +3,37 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // #define DEBUG
 
-void map_print(map*);
+void map_print(map* m, void print_value(void*));
 
-void map_print_value(void* value) {
-    printf("%d", *(int*)value);
-}
+void print_int(void* value) { printf("%d", *(int*)value); }
+
+void print_str(void* value) { printf("%s", (char*)value); }
 
 size_t map_n_buckets(map* m) {
     return *(((size_t*)m) + 1); // n_buckets is the second field.
 }
 
-int main(void) {
-    char* keys[] = {"foo", "bar", "bar", "baz", "baz", "baz"};
-
+void test_map_new(void) {
     map* m = map_new();
+    assert(m != NULL);
     assert(map_len(m) == 0);
     assert(map_n_buckets(m) == 8);
+    map_free(m);
+}
 
-    for (size_t i = 0; i < 6; i++) {
-        int* p = map_get(m, keys[i]);
-        if (p == NULL) {
-            p = calloc(1, sizeof(int));
-            assert(map_set(m, keys[i], p) == p);
-        }
-        (*p)++;
+void test_map_get_set(void) {
+    map* m = map_new();
+    assert(map_get(m, "nil") == NULL);
+
+    char* keys[] = {"foo", "bar", "baz"};
+
+    int values1[] = {1, 2, 3};
+    for (size_t i = 0; i < 3; i++) {
+        assert(map_set(m, keys[i], &values1[i]) == &values1[i]);
     }
 
     assert(map_len(m) == 3);
@@ -37,42 +41,89 @@ int main(void) {
     assert(*(int*)map_get(m, "bar") == 2);
     assert(*(int*)map_get(m, "baz") == 3);
 
-    for (struct map_iter it = map_iter_new(m); map_iter_next(&it);) {
-        *(int*)it.value *= 2;
+#ifdef DEBUG
+    printf("\n%s: ", __func__);
+    map_print(m, print_int);
+#endif
+
+    int values2[] = {-1, -2, -3};
+    for (size_t i = 0; i < 3; i++) {
+        assert(map_set(m, keys[i], &values2[i]) == &values1[i]);
     }
 
     assert(map_len(m) == 3);
-    assert(*(int*)map_get(m, "foo") == 2);
-    assert(*(int*)map_get(m, "bar") == 4);
-    assert(*(int*)map_get(m, "baz") == 6);
+    assert(*(int*)map_get(m, "foo") == -1);
+    assert(*(int*)map_get(m, "bar") == -2);
+    assert(*(int*)map_get(m, "baz") == -3);
 
 #ifdef DEBUG
-    map_print(m);
+    printf("\n%s: ", __func__);
+    map_print(m, print_int);
 #endif
 
-    int n1 = 1, n2 = 2;
-    assert(map_set(m, "abc", &n1) == &n1);
-    assert(map_set(m, "xyz", &n2) == &n2);
-    assert(map_len(m) == 5);
+    map_free(m);
+}
+
+void test_map_del(void) {
+    map* m = map_new();
+
+    map_set(m, "foo", "");
+    assert(map_len(m) == 1);
+
+    map_del(m, "nil");
+    assert(map_len(m) == 1);
+
+    map_del(m, "foo");
+    assert(map_len(m) == 0);
+
+    map_free(m);
+}
+
+void test_map_resize(void) {
+    map* m = map_new();
+
+    char keys[8][2 + 1]; // kN + \0
+    for (size_t i = 0; i < 8; i++) {
+        snprintf(keys[i], sizeof(keys[i]), "k%zu", i + 1);
+        map_set(m, keys[i], "");
+    }
+
+    assert(map_len(m) == 8);
     assert(map_n_buckets(m) == 16);
 
-    assert(*(int*)map_get(m, "abc") == 1);
-    assert(map_set(m, "abc", &n2) == &n1);
-    assert(*(int*)map_get(m, "abc") == 2);
-
 #ifdef DEBUG
-    map_print(m);
+    printf("\n%s: ", __func__);
+    map_print(m, print_str);
 #endif
 
-    map_del(m, "abc");
-    map_del(m, "xyz");
-    map_del(m, "non");
-    assert(map_len(m) == 3);
-
-    for (struct map_iter it = map_iter_new(m); map_iter_next(&it);) {
-        free(it.value);
-    }
     map_free(m);
+}
 
-    return EXIT_SUCCESS;
+void test_map_iter(void) {
+    map* m = map_new();
+
+    char* key   = "foo";
+    int   value = 1;
+    map_set(m, key, &value);
+
+    struct map_iter it = map_iter_new(m);
+    assert(it.key == NULL);
+    assert(it.value == NULL);
+    assert(it._map == m);
+    assert(it._bucket_idx == 0);
+
+    assert(map_iter_next(&it));
+    assert(strcmp(it.key, key) == 0);
+    assert(it.value == &value);
+    assert(!map_iter_next(&it));
+
+    map_free(m);
+}
+
+int main(void) {
+    test_map_new();
+    test_map_get_set();
+    test_map_del();
+    test_map_resize();
+    test_map_iter();
 }
