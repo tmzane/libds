@@ -48,7 +48,7 @@ void* map_get(const map* m, const char* key) {
     return NULL;
 }
 
-void* map_set(map* m, const char* key, void* value) {
+void* map_set(map* m, const char* key, const void* value) {
     assert(value != NULL);
 
     // TODO: shrink
@@ -61,7 +61,7 @@ void* map_set(map* m, const char* key, void* value) {
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
         if (strcmp(e->key, key) == 0) {
             void* prev = e->value;
-            e->value   = value;
+            e->value   = (void*)value;
             return prev;
         }
     }
@@ -72,12 +72,12 @@ void* map_set(map* m, const char* key, void* value) {
     }
 
     e->key        = strdup(key);
-    e->value      = value;
+    e->value      = (void*)value;
     e->next       = m->buckets[i];
     m->buckets[i] = e;
     m->n_entries++;
 
-    return value;
+    return (void*)value;
 }
 
 void map_del(map* m, const char* key) {
@@ -164,7 +164,7 @@ struct map_iter map_iter_new(const map* m) {
     struct map_iter it = {
         .key         = NULL,
         .value       = NULL,
-        ._map        = m,
+        ._map        = (map*)m,
         ._bucket_idx = 0,
     };
     return it;
