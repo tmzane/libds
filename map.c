@@ -11,7 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INIT_N_BUCKETS 8
+#define N_BUCKETS       4
+#define MAX_LOAD_FACTOR 2
 
 static uint64_t hash(const char* key);
 static map*     map_resize(map* m, size_t n_buckets);
@@ -33,7 +34,7 @@ map* map_new(void) {
     if (m == NULL) {
         return NULL;
     }
-    if (map_resize(m, INIT_N_BUCKETS) == NULL) {
+    if (map_resize(m, N_BUCKETS) == NULL) {
         free(m);
         return NULL;
     }
@@ -56,7 +57,7 @@ void* map_set(map* m, const char* key, const void* value) {
     assert(value != NULL);
 
     // TODO: shrink
-    if (m->n_entries >= m->n_buckets / 2) {
+    if (m->n_entries >= m->n_buckets * MAX_LOAD_FACTOR) {
         if (map_resize(m, m->n_buckets * 2) == NULL) {
             return NULL;
         }

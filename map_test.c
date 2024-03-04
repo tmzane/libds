@@ -21,7 +21,7 @@ void test_map_new(void) {
     map* m = map_new();
     assert(m != NULL);
     assert(map_len(m) == 0);
-    assert(map_n_buckets(m) == 8);
+    assert(map_n_buckets(m) == 4);
     map_free(m);
 }
 
@@ -87,9 +87,10 @@ void test_map_resize(void) {
         snprintf(keys[i], sizeof(keys[i]), "k%zu", i + 1);
         map_set(m, keys[i], "");
     }
+    assert(map_n_buckets(m) == 4);
 
-    assert(map_len(m) == 8);
-    assert(map_n_buckets(m) == 16);
+    map_set(m, "k9", "");
+    assert(map_n_buckets(m) == 8);
 
 #ifdef DEBUG
     printf("\n%s: ", __func__);
