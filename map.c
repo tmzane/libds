@@ -33,7 +33,11 @@ map* map_new(void) {
     if (m == NULL) {
         return NULL;
     }
-    return map_resize(m, INIT_N_BUCKETS);
+    if (map_resize(m, INIT_N_BUCKETS) == NULL) {
+        free(m);
+        return NULL;
+    }
+    return m;
 }
 
 void* map_get(const map* m, const char* key) {
@@ -53,7 +57,9 @@ void* map_set(map* m, const char* key, const void* value) {
 
     // TODO: shrink
     if (m->n_entries >= m->n_buckets / 2) {
-        map_resize(m, m->n_buckets * 2);
+        if (map_resize(m, m->n_buckets * 2) == NULL) {
+            return NULL;
+        }
     }
 
     size_t i = hash(key) % m->n_buckets;
