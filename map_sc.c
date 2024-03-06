@@ -1,5 +1,8 @@
 // A hash map implementation that uses separate chaining [1] to resolve collisions.
 //
+// Initial number of buckets is 4.
+// Maximum load factor is 2.0.
+//
 // [1]: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 
 #include "map.h"
@@ -11,8 +14,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define N_BUCKETS       4
-#define MAX_LOAD_FACTOR 2
+const size_t INIT_N_BUCKETS = 4;
+
+size_t max_n_entries(size_t n_buckets) {
+    return n_buckets * 2;
+}
 
 static uint64_t hash(const char* key);
 static map*     map_resize(map* m, size_t n_buckets);
@@ -34,7 +40,7 @@ map* map_new(void) {
     if (m == NULL) {
         return NULL;
     }
-    if (map_resize(m, N_BUCKETS) == NULL) {
+    if (map_resize(m, INIT_N_BUCKETS) == NULL) {
         free(m);
         return NULL;
     }
@@ -56,13 +62,6 @@ void* map_get(const map* m, const char* key) {
 void* map_set(map* m, const char* key, const void* value) {
     assert(value != NULL);
 
-    // TODO: shrink
-    if (m->n_entries >= m->n_buckets * MAX_LOAD_FACTOR) {
-        if (map_resize(m, m->n_buckets * 2) == NULL) {
-            return NULL;
-        }
-    }
-
     size_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
@@ -83,6 +82,12 @@ void* map_set(map* m, const char* key, const void* value) {
     e->next       = m->buckets[i];
     m->buckets[i] = e;
     m->n_entries++;
+
+    if (m->n_entries > max_n_entries(m->n_buckets)) {
+        if (map_resize(m, m->n_buckets * 2) == NULL) {
+            return NULL;
+        }
+    }
 
     return (void*)value;
 }
@@ -114,6 +119,19 @@ size_t map_len(const map* m) {
     return m->n_entries;
 }
 
+void map_free(map* m) {
+    for (size_t i = 0; i < m->n_buckets; i++) {
+        for (struct entry* e = m->buckets[i]; e != NULL;) {
+            struct entry* next = e->next;
+            free(e->key);
+            free(e);
+            e = next;
+        }
+    }
+    free(m->buckets);
+    free(m);
+}
+
 static map* map_resize(map* m, size_t n_buckets) {
     struct entry** new_buckets = calloc(n_buckets, sizeof(struct entry*));
     if (new_buckets == NULL) {
@@ -137,20 +155,7 @@ static map* map_resize(map* m, size_t n_buckets) {
     return m;
 }
 
-void map_free(map* m) {
-    for (size_t i = 0; i < m->n_buckets; i++) {
-        for (struct entry* e = m->buckets[i]; e != NULL;) {
-            struct entry* next = e->next;
-            free(e->key);
-            free(e);
-            e = next;
-        }
-    }
-    free(m->buckets);
-    free(m);
-}
-
-void map_print(map* m, void print_value(void*)) {
+void map_print(const map* m, void print_value(void*)) {
     printf("%zu buckets; %zu entries\n", m->n_buckets, m->n_entries);
     for (size_t i = 0; i < m->n_buckets; i++) {
         printf("%zu:", i);
@@ -178,7 +183,7 @@ struct map_iter map_iter_new(const map* m) {
 }
 
 bool map_iter_next(struct map_iter* it) {
-    const map* m = it->_map;
+    map* m = it->_map;
 
     for (; it->_bucket_idx < m->n_buckets; it->_bucket_idx++) {
         size_t i = it->_bucket_idx;

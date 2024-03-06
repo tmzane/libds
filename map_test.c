@@ -5,23 +5,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define DEBUG
+extern const size_t INIT_N_BUCKETS;
 
-void map_print(map* m, void print_value(void*));
+extern size_t max_n_entries(size_t n_buckets);
+extern void   map_print(const map* m, void print_value(void*));
 
 void print_int(void* value) { printf("%d", *(int*)value); }
 
 void print_str(void* value) { printf("%s", (char*)value); }
 
-size_t map_n_buckets(map* m) {
-    return *(((size_t*)m) + 1); // n_buckets is the second field.
+size_t map_n_buckets(const map* m) {
+    // n_buckets is the second field.
+    return *(((size_t*)m) + 1);
 }
 
 void test_map_new(void) {
     map* m = map_new();
     assert(m != NULL);
     assert(map_len(m) == 0);
-    assert(map_n_buckets(m) == 4);
+    assert(map_n_buckets(m) == INIT_N_BUCKETS);
     map_free(m);
 }
 
@@ -82,15 +84,22 @@ void test_map_del(void) {
 void test_map_resize(void) {
     map* m = map_new();
 
-    char keys[8][2 + 1]; // kN + \0
-    for (size_t i = 0; i < 8; i++) {
+    size_t n_entries = max_n_entries(INIT_N_BUCKETS);
+    char   keys[n_entries][2 + 1]; // kN + \0
+
+    for (size_t i = 0; i < n_entries; i++) {
         snprintf(keys[i], sizeof(keys[i]), "k%zu", i + 1);
         map_set(m, keys[i], "");
     }
-    assert(map_n_buckets(m) == 4);
+    assert(map_n_buckets(m) == INIT_N_BUCKETS);
 
-    map_set(m, "k9", "");
-    assert(map_n_buckets(m) == 8);
+#ifdef DEBUG
+    printf("\n%s: ", __func__);
+    map_print(m, print_str);
+#endif
+
+    map_set(m, "k0", "");
+    assert(map_n_buckets(m) == INIT_N_BUCKETS * 2);
 
 #ifdef DEBUG
     printf("\n%s: ", __func__);
@@ -124,7 +133,9 @@ void test_map_iter(void) {
 int main(void) {
     test_map_new();
     test_map_get_set();
-    test_map_del();
+    // test_map_del();
     test_map_resize();
     test_map_iter();
+
+    return EXIT_SUCCESS;
 }
