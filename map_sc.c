@@ -48,6 +48,9 @@ map* map_new(void) {
 }
 
 void* map_get(const map* m, const char* key) {
+    assert(m != NULL);
+    assert(key != NULL);
+
     size_t i = hash(key) % m->n_buckets;
 
     for (struct entry* e = m->buckets[i]; e != NULL; e = e->next) {
@@ -60,6 +63,8 @@ void* map_get(const map* m, const char* key) {
 }
 
 void* map_set(map* m, const char* key, const void* value) {
+    assert(m != NULL);
+    assert(key != NULL);
     assert(value != NULL);
 
     size_t i = hash(key) % m->n_buckets;
@@ -93,6 +98,9 @@ void* map_set(map* m, const char* key, const void* value) {
 }
 
 void map_del(map* m, const char* key) {
+    assert(m != NULL);
+    assert(key != NULL);
+
     size_t i = hash(key) % m->n_buckets;
 
     struct entry* prev = NULL;
@@ -116,10 +124,13 @@ void map_del(map* m, const char* key) {
 }
 
 size_t map_len(const map* m) {
+    assert(m != NULL);
     return m->n_entries;
 }
 
 void map_free(map* m) {
+    assert(m != NULL);
+
     for (size_t i = 0; i < m->n_buckets; i++) {
         for (struct entry* e = m->buckets[i]; e != NULL;) {
             struct entry* next = e->next;
@@ -128,6 +139,7 @@ void map_free(map* m) {
             e = next;
         }
     }
+
     free(m->buckets);
     free(m);
 }
@@ -173,6 +185,7 @@ void map_print(const map* m, void print_value(void*)) {
 }
 
 struct map_iter map_iter_new(const map* m) {
+    assert(m != NULL);
     struct map_iter it = {
         .key         = NULL,
         .value       = NULL,
@@ -183,8 +196,9 @@ struct map_iter map_iter_new(const map* m) {
 }
 
 bool map_iter_next(struct map_iter* it) {
-    map* m = it->_map;
+    assert(it != NULL);
 
+    map* m = it->_map;
     for (; it->_bucket_idx < m->n_buckets; it->_bucket_idx++) {
         size_t i = it->_bucket_idx;
         if (m->buckets[i] == NULL) {
