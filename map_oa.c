@@ -102,7 +102,7 @@ void* map_set(map* m, const char* key, const void* value) {
     return (void*)value;
 }
 
-void map_del(map* m, const char* key) {
+void* map_del(map* m, const char* key) {
     assert(m != NULL);
     assert(key != NULL);
 
@@ -110,7 +110,7 @@ void map_del(map* m, const char* key) {
     for (size_t i = hash(key) % m->n_buckets;; i = (i + 1) % m->n_buckets) {
         e = &m->buckets[i];
         if (e->key == NULL) {
-            return;
+            return NULL;
         }
         if (e->key == tombstone) {
             continue;
@@ -120,11 +120,14 @@ void map_del(map* m, const char* key) {
         }
     }
 
+    void* value = e->value;
     free(e->key);
     e->key   = tombstone;
     e->value = NULL;
     m->n_entries--;
     m->n_tombstones++;
+
+    return value;
 }
 
 size_t map_len(const map* m) {

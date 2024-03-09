@@ -97,7 +97,7 @@ void* map_set(map* m, const char* key, const void* value) {
     return (void*)value;
 }
 
-void map_del(map* m, const char* key) {
+void* map_del(map* m, const char* key) {
     assert(m != NULL);
     assert(key != NULL);
 
@@ -115,12 +115,15 @@ void map_del(map* m, const char* key) {
             prev->next = e->next;
         }
 
+        void* value = e->value;
         free(e->key);
         free(e);
         m->n_entries--;
 
-        return;
+        return value;
     }
+
+    return NULL;
 }
 
 size_t map_len(const map* m) {

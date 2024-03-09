@@ -63,17 +63,18 @@ void test_map_get_set(void) {
 void test_map_del(void) {
     map* m = map_new();
 
-    map_set(m, "foo", "bar");
+    char* value = "bar";
+    map_set(m, "foo", value);
     assert(map_len(m) == 1);
 
-    map_del(m, "nil");
+    assert(map_del(m, "nil") == NULL);
     assert(map_len(m) == 1);
 
 #ifdef DEBUG_MAP_DEL
     map_print(m, print_str);
 #endif
 
-    map_del(m, "foo");
+    assert(map_del(m, "foo") == value);
     assert(map_len(m) == 0);
 
 #ifdef DEBUG_MAP_DEL
