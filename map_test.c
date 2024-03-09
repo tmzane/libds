@@ -8,16 +8,12 @@
 extern const size_t INIT_N_BUCKETS;
 
 extern size_t max_n_entries(size_t n_buckets);
+extern size_t map_n_buckets(const map* m);
 extern void   map_print(const map* m, void print_value(void*));
 
 void print_int(void* value) { printf("%d", *(int*)value); }
 
 void print_str(void* value) { printf("%s", (char*)value); }
-
-size_t map_n_buckets(const map* m) {
-    // n_buckets is the second field.
-    return *(((size_t*)m) + 1);
-}
 
 void test_map_new(void) {
     map* m = map_new();
@@ -43,8 +39,7 @@ void test_map_get_set(void) {
     assert(*(int*)map_get(m, "bar") == 2);
     assert(*(int*)map_get(m, "baz") == 3);
 
-#ifdef DEBUG
-    printf("\n%s: ", __func__);
+#ifdef DEBUG_MAP_GET_SET
     map_print(m, print_int);
 #endif
 
@@ -58,8 +53,7 @@ void test_map_get_set(void) {
     assert(*(int*)map_get(m, "bar") == -2);
     assert(*(int*)map_get(m, "baz") == -3);
 
-#ifdef DEBUG
-    printf("\n%s: ", __func__);
+#ifdef DEBUG_MAP_GET_SET
     map_print(m, print_int);
 #endif
 
@@ -69,14 +63,22 @@ void test_map_get_set(void) {
 void test_map_del(void) {
     map* m = map_new();
 
-    map_set(m, "foo", "");
+    map_set(m, "foo", "bar");
     assert(map_len(m) == 1);
 
     map_del(m, "nil");
     assert(map_len(m) == 1);
 
+#ifdef DEBUG_MAP_DEL
+    map_print(m, print_str);
+#endif
+
     map_del(m, "foo");
     assert(map_len(m) == 0);
+
+#ifdef DEBUG_MAP_DEL
+    map_print(m, print_str);
+#endif
 
     map_free(m);
 }
@@ -85,27 +87,29 @@ void test_map_resize(void) {
     map* m = map_new();
 
     size_t n_entries = max_n_entries(INIT_N_BUCKETS);
-    char   keys[n_entries][2 + 1]; // kN + \0
+    char*  keys      = calloc(n_entries, 4 + 1); // keyN + \0
+    char*  next_key  = keys;
 
     for (size_t i = 0; i < n_entries; i++) {
-        snprintf(keys[i], sizeof(keys[i]), "k%zu", i + 1);
-        map_set(m, keys[i], "");
+        (void)snprintf(next_key, 4 + 1, "key%zu", i + 1);
+        map_set(m, next_key, "val");
+        next_key++;
     }
+
     assert(map_n_buckets(m) == INIT_N_BUCKETS);
 
-#ifdef DEBUG
-    printf("\n%s: ", __func__);
+#ifdef DEBUG_MAP_RESIZE
     map_print(m, print_str);
 #endif
 
-    map_set(m, "k0", "");
+    map_set(m, "key0", "val");
     assert(map_n_buckets(m) == INIT_N_BUCKETS * 2);
 
-#ifdef DEBUG
-    printf("\n%s: ", __func__);
+#ifdef DEBUG_MAP_RESIZE
     map_print(m, print_str);
 #endif
 
+    free(keys);
     map_free(m);
 }
 
@@ -113,7 +117,7 @@ void test_map_iter(void) {
     map* m = map_new();
 
     char* key   = "foo";
-    int   value = 1;
+    char* value = "bar";
     map_set(m, key, &value);
 
     struct map_iter it = map_iter_new(m);
@@ -123,7 +127,7 @@ void test_map_iter(void) {
     assert(it._bucket_idx == 0);
 
     assert(map_iter_next(&it));
-    assert(strcmp(it.key, key) == 0);
+    assert(strcmp(it.key, "foo") == 0);
     assert(it.value == &value);
     assert(!map_iter_next(&it));
 
@@ -133,7 +137,7 @@ void test_map_iter(void) {
 int main(void) {
     test_map_new();
     test_map_get_set();
-    // test_map_del();
+    test_map_del();
     test_map_resize();
     test_map_iter();
 

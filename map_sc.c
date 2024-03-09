@@ -167,18 +167,22 @@ static map* map_resize(map* m, size_t n_buckets) {
     return m;
 }
 
+size_t map_n_buckets(const map* m) {
+    return m->n_buckets;
+}
+
 void map_print(const map* m, void print_value(void*)) {
-    printf("%zu buckets; %zu entries\n", m->n_buckets, m->n_entries);
+    printf("\n%zu buckets; %zu entries\n", m->n_buckets, m->n_entries);
     for (size_t i = 0; i < m->n_buckets; i++) {
         printf("%zu:", i);
         for (struct entry* e = m->buckets[i];; e = e->next) {
             if (e == NULL) {
-                printf(" NULL");
+                printf(" null");
                 break;
             }
-            printf(" (%s:", e->key);
+            printf(" %s=", e->key);
             print_value(e->value);
-            printf(") ->");
+            printf(" ->");
         }
         printf("\n");
     }

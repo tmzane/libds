@@ -9,7 +9,7 @@ typedef struct map map;
 map*   map_new(void);
 void*  map_get(const map* m, const char* key);
 void*  map_set(map* m, const char* key, const void* value);
-void   map_del(map* m, const char* key);
+void   map_del(map* m, const char* key); // TODO: return the value so that it can be freed.
 size_t map_len(const map* m);
 void   map_free(map* m);
 
