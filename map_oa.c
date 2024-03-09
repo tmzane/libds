@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -173,6 +172,9 @@ static map* map_resize(map* m, size_t n_buckets) {
     return m;
 }
 
+#ifdef TEST
+#include <stdio.h>
+
 size_t map_n_buckets(const map* m) {
     return m->n_buckets;
 }
@@ -195,6 +197,8 @@ void map_print(const map* m, void print_value(void*)) {
         printf("\n");
     }
 }
+
+#endif // TEST
 
 struct map_iter map_iter_new(const map* m) {
     assert(m != NULL);
