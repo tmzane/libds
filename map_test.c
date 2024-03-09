@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define array_len(x) (sizeof(x) / sizeof((x)[0]))
+
 extern const size_t INIT_N_BUCKETS;
 
 extern size_t max_n_entries(size_t n_buckets);
@@ -30,11 +32,11 @@ void test_map_get_set(void) {
     char* keys[] = {"foo", "bar", "baz"};
 
     int values1[] = {1, 2, 3};
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < array_len(values1); i++) {
         assert(map_set(m, keys[i], &values1[i]) == &values1[i]);
     }
 
-    assert(map_len(m) == 3);
+    assert(map_len(m) == array_len(values1));
     assert(*(int*)map_get(m, "foo") == 1);
     assert(*(int*)map_get(m, "bar") == 2);
     assert(*(int*)map_get(m, "baz") == 3);
@@ -44,11 +46,11 @@ void test_map_get_set(void) {
 #endif
 
     int values2[] = {-1, -2, -3};
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < array_len(values2); i++) {
         assert(map_set(m, keys[i], &values2[i]) == &values1[i]);
     }
 
-    assert(map_len(m) == 3);
+    assert(map_len(m) == array_len(values2));
     assert(*(int*)map_get(m, "foo") == -1);
     assert(*(int*)map_get(m, "bar") == -2);
     assert(*(int*)map_get(m, "baz") == -3);
@@ -87,12 +89,14 @@ void test_map_del(void) {
 void test_map_resize(void) {
     map* m = map_new();
 
+#define KEY_SIZE (4 + 1) // keyN + \0
+
     size_t n_entries = max_n_entries(INIT_N_BUCKETS);
-    char*  keys      = calloc(n_entries, 4 + 1); // keyN + \0
+    char*  keys      = calloc(n_entries, KEY_SIZE);
     char*  next_key  = keys;
 
     for (size_t i = 0; i < n_entries; i++) {
-        (void)snprintf(next_key, 4 + 1, "key%zu", i + 1);
+        (void)snprintf(next_key, KEY_SIZE, "key%zu", i + 1);
         map_set(m, next_key, "val");
         next_key++;
     }
@@ -119,7 +123,7 @@ void test_map_iter(void) {
 
     char* key   = "foo";
     char* value = "bar";
-    map_set(m, key, &value);
+    map_set(m, key, value);
 
     struct map_iter it = map_iter_new(m);
     assert(it.key == NULL);
@@ -129,7 +133,7 @@ void test_map_iter(void) {
 
     assert(map_iter_next(&it));
     assert(strcmp(it.key, "foo") == 0);
-    assert(it.value == &value);
+    assert(it.value == value);
     assert(!map_iter_next(&it));
 
     map_free(m);
