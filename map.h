@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 /*
- * A hash map that supports dynamic resizing.
+ * A hash map with support for dynamic resizing.
  * The keys are strings, the values must not be NULL.
  * Must be created with map_new() and freed with map_free().
  *
