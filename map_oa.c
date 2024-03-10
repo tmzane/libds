@@ -28,6 +28,8 @@ MAYBE_STATIC size_t max_n_entries(size_t n_buckets) {
 static uint64_t hash(const char* key);
 static map*     map_resize(map* m, size_t n_buckets);
 
+static struct allocator std_allocator;
+
 static char* tombstone = "";
 
 struct entry {
@@ -36,21 +38,31 @@ struct entry {
 };
 
 struct map {
-    size_t        n_entries;
-    size_t        n_tombstones;
-    size_t        n_buckets;
-    struct entry* buckets;
+    size_t            n_entries;
+    size_t            n_tombstones;
+    size_t            n_buckets;
+    struct entry*     buckets;
+    struct allocator* allocator;
 };
 
-map* map_new(void) {
-    map* m = calloc(1, sizeof(map));
+map* map_new(struct allocator* a) {
+    if (a == NULL) {
+        a = &std_allocator;
+    }
+
+    map* m = a->malloc(a->ctx, sizeof(map));
     if (m == NULL) {
         return NULL;
     }
+
+    memset(m, 0, sizeof(map));
+    m->allocator = a;
+
     if (map_resize(m, INIT_N_BUCKETS) == NULL) {
-        free(m);
+        a->free(a->ctx, m);
         return NULL;
     }
+
     return m;
 }
 
@@ -126,7 +138,7 @@ void* map_del(map* m, const char* key) {
     }
 
     void* value = e->value;
-    free(e->key);
+    m->allocator->free(m->allocator->ctx, e->key);
     e->key   = tombstone;
     e->value = NULL;
     m->n_entries--;
@@ -144,18 +156,22 @@ void map_free(map* m) {
     assert(m != NULL);
     for (size_t i = 0; i < m->n_buckets; i++) {
         if (m->buckets[i].key != tombstone) {
-            free(m->buckets[i].key);
+            m->allocator->free(m->allocator->ctx, m->buckets[i].key);
         }
     }
-    free(m->buckets);
-    free(m);
+    m->allocator->free(m->allocator->ctx, m->buckets);
+    m->allocator->free(m->allocator->ctx, m);
 }
 
 static map* map_resize(map* m, size_t n_buckets) {
-    struct entry* new_buckets = calloc(n_buckets, sizeof(struct entry));
+    size_t new_size = n_buckets * sizeof(struct entry);
+
+    struct entry* new_buckets = m->allocator->malloc(m->allocator->ctx, new_size);
     if (new_buckets == NULL) {
         return NULL;
     }
+
+    memset(new_buckets, 0, new_size);
 
     for (size_t i = 0; i < m->n_buckets; i++) {
         struct entry e = m->buckets[i];
@@ -170,7 +186,7 @@ static map* map_resize(map* m, size_t n_buckets) {
         }
     }
 
-    free(m->buckets);
+    m->allocator->free(m->allocator->ctx, m->buckets);
     m->n_tombstones = 0;
     m->n_buckets    = n_buckets;
     m->buckets      = new_buckets;
@@ -244,3 +260,19 @@ static uint64_t hash(const char* key) {
     }
     return h;
 }
+
+static void* std_malloc(void* ctx, size_t size) {
+    (void)ctx;
+    return malloc(size);
+}
+
+static void std_free(void* ctx, void* ptr) {
+    (void)ctx;
+    free(ptr);
+}
+
+static struct allocator std_allocator = {
+    .ctx    = NULL,
+    .malloc = std_malloc,
+    .free   = std_free,
+};

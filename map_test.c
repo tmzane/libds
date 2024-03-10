@@ -18,7 +18,7 @@ void print_int(void* value) { printf("%d", *(int*)value); }
 void print_str(void* value) { printf("%s", (char*)value); }
 
 void test_map_new(void) {
-    map* m = map_new();
+    map* m = map_new(NULL);
     assert(m != NULL);
     assert(map_len(m) == 0);
     assert(map_n_buckets(m) == INIT_N_BUCKETS);
@@ -26,7 +26,7 @@ void test_map_new(void) {
 }
 
 void test_map_get_set(void) {
-    map* m = map_new();
+    map* m = map_new(NULL);
     assert(map_get(m, "nil") == NULL);
 
     char* keys[] = {"foo", "bar", "baz"};
@@ -63,7 +63,7 @@ void test_map_get_set(void) {
 }
 
 void test_map_del(void) {
-    map* m = map_new();
+    map* m = map_new(NULL);
 
     char* value = "bar";
     map_set(m, "foo", value);
@@ -87,7 +87,7 @@ void test_map_del(void) {
 }
 
 void test_map_resize(void) {
-    map* m = map_new();
+    map* m = map_new(NULL);
 
 #define KEY_SIZE (4 + 1) // keyN + \0
 
@@ -119,7 +119,7 @@ void test_map_resize(void) {
 }
 
 void test_map_iter(void) {
-    map* m = map_new();
+    map* m = map_new(NULL);
 
     char* key   = "foo";
     char* value = "bar";

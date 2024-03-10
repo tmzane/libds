@@ -5,7 +5,16 @@
 #include <stddef.h>
 
 /*
- * A hash map with support for dynamic resizing.
+ * A memory allocator.
+ */
+struct allocator {
+    void* ctx;
+    void* (*malloc)(void* ctx, size_t size);
+    void (*free)(void* ctx, void* ptr);
+};
+
+/*
+ * A hash map with support for dynamic resizing and custom allocators.
  * The keys are strings, the values must not be NULL.
  * Must be created with map_new() and freed with map_free().
  *
@@ -16,9 +25,10 @@ typedef struct map map;
 
 /*
  * Allocates and initializes a new map.
+ * If allocator is NULL, uses the standard malloc() and free().
  * Returns a pointer to the map or NULL if out of memory.
  */
-map* map_new(void);
+map* map_new(struct allocator* a);
 
 /*
  * Finds the value for the given key in the map.

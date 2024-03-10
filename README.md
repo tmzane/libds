@@ -4,10 +4,10 @@ Data structures implemented in C.
 
 ## Map
 
-A hash map with support for dynamic resizing.
+A hash map with support for dynamic resizing and custom allocators.
 
 ```c
-map* m = map_new();
+map* m = map_new(NULL);
 
 map_get(m, "foo"); // -> NULL
 map_len(m);        // -> 0
