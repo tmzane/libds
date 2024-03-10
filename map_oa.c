@@ -13,9 +13,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-const size_t INIT_N_BUCKETS = 8;
+#ifdef TEST
+#define MAYBE_STATIC
+#else
+#define MAYBE_STATIC static
+#endif
 
-size_t max_n_entries(size_t n_buckets) {
+MAYBE_STATIC const size_t INIT_N_BUCKETS = 8;
+
+MAYBE_STATIC size_t max_n_entries(size_t n_buckets) {
     return n_buckets / 4 * 3;
 }
 
